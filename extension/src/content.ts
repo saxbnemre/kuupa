@@ -20,43 +20,38 @@ const triggerNativeEvents = (element: HTMLInputElement | HTMLButtonElement, even
 };
 
 const applyCoupon = async (code: string, config: StoreConfig): Promise<boolean> => {
-  const inputEl = document.querySelector<HTMLInputElement>(config.couponInputSelector);
-  const btnEl = document.querySelector<HTMLButtonElement>(config.applyButtonSelector);
+  try {
+    const inputEl = document.querySelector<HTMLInputElement>(config.couponInputSelector);
+    const btnEl = document.querySelector<HTMLButtonElement>(config.applyButtonSelector);
 
-  if (!inputEl || !btnEl) {
-    console.warn('kUUpa: Input or Button not found in DOM.');
+    if (!inputEl || !btnEl) {
+      console.warn('kUUpa: Input or Button not found in DOM.');
+      return false;
+    }
+
+    inputEl.focus();
+    inputEl.value = code;
+    triggerNativeEvents(inputEl, ['input', 'change', 'blur']);
+    
+    await sleep(500); 
+    
+    btnEl.click();
+    triggerNativeEvents(btnEl, ['mousedown', 'mouseup', 'click']);
+    
+    await sleep(2500); 
+
+    if (config.successMessageSelector) {
+      const successEl = document.querySelector(config.successMessageSelector);
+      if (successEl && successEl.textContent && successEl.textContent.trim().length > 0) {
+        return true; 
+      }
+    }
+    
+    return false;
+  } catch (err) {
+    console.error('kUUpa: DOM manipulation error', err);
     return false;
   }
-
-  // 1. Focus input
-  inputEl.focus();
-  
-  // 2. Safely set value (XSS safe since it's just setting the value property)
-  inputEl.value = code;
-  
-  // 3. Dispatch events to trigger React/Vue/Angular states
-  triggerNativeEvents(inputEl, ['input', 'change', 'blur']);
-  
-  await sleep(500); // Wait for UI update
-  
-  // 4. Click the button
-  btnEl.click();
-  triggerNativeEvents(btnEl, ['mousedown', 'mouseup', 'click']);
-  
-  // 5. Wait for network/validation
-  await sleep(2500); 
-
-  // 6. Check for success if selector is provided
-  if (config.successMessageSelector) {
-    const successEl = document.querySelector(config.successMessageSelector);
-    if (successEl && successEl.textContent && successEl.textContent.trim().length > 0) {
-      return true; // Assumed success
-    }
-  }
-  
-  // If no success selector, we assume failure to be safe and try the next one, 
-  // or we can read the total price diff, but for this MVP, we rely on selectors.
-  return false;
 };
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {

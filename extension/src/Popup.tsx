@@ -46,10 +46,23 @@ const Popup: React.FC = () => {
         if (tabs[0].id) {
           setStatus('searching');
           chrome.tabs.sendMessage(tabs[0].id, { type: 'START_COUPON_TEST', coupons }, (res) => {
-            if (res?.status === 'done') {
+            if (chrome.runtime.lastError) {
+              console.error('Messaging error:', chrome.runtime.lastError);
               setStatus('idle');
+              return;
+            }
+            if (res?.status === 'done' || res?.status === 'error') {
+              setStatus('idle');
+            } else {
+              // Fallback timeout in case of unexpected response
+              setTimeout(() => setStatus('idle'), 5000);
             }
           });
+          
+          // Absolute fallback timeout in case the content script is totally dead
+          setTimeout(() => {
+             setStatus(prev => prev === 'searching' ? 'idle' : prev);
+          }, 8000);
         }
       });
     }

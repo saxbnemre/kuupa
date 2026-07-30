@@ -22,8 +22,8 @@ async function seedTrendyol() {
       { domain: 'trendyol.com' },
       {
         domain: 'trendyol.com',
-        couponInputSelector: 'input[placeholder*="İndirim"], input[name*="coupon"], input[id*="discount"]', // Genel (tahmini) seçiciler
-        applyButtonSelector: 'button:contains("Uygula"), .apply-discount-button, [data-testid="apply-discount"]', 
+        couponInputSelector: 'input[placeholder*="İndirim"], input[name*="coupon"], input[id*="discount"]',
+        applyButtonSelector: '.apply-discount-button, [data-testid="apply-discount"], button[type="button"]', 
       },
       { upsert: true, new: true }
     );
