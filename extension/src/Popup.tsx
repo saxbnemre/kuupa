@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Tag, CheckCircle } from 'lucide-react';
+import { Search, Tag } from 'lucide-react';
 
 const Popup: React.FC = () => {
   const [domain, setDomain] = useState<string>('Yükleniyor...');

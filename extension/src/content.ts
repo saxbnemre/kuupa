@@ -59,7 +59,7 @@ const applyCoupon = async (code: string, config: StoreConfig): Promise<boolean> 
   return false;
 };
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'START_COUPON_TEST') {
     const coupons: string[] = message.coupons || [];
     

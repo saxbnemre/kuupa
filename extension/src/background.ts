@@ -14,7 +14,7 @@ interface StoreData {
 // In-memory cache for the current session
 const cache = new Map<string, StoreData>();
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'CHECK_COUPONS') {
     const domain = message.domain;
     
