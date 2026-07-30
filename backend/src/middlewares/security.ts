@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Allowed Chrome Extension ID (This should ideally be in env vars for production)
 const ALLOWED_EXTENSION_ID = process.env.EXTENSION_ID || 'kUUpa-test-id';
@@ -16,14 +19,16 @@ export const apiLimiter = rateLimit({
 // Middleware to enforce extension origin
 export const enforceExtensionOrigin = (req: Request, res: Response, next: NextFunction) => {
   const origin = req.headers.origin;
-  const userAgent = req.headers['user-agent'] || '';
+  const extensionId = req.headers['x-extension-id'];
   
-  // Allow requests coming from the explicit chrome-extension origin
+  // Allow requests coming from the explicit chrome-extension origin OR carrying the explicit ID
   const allowedOrigin = `chrome-extension://${ALLOWED_EXTENSION_ID}`;
 
-  if (origin === allowedOrigin) {
+  if (origin === allowedOrigin || extensionId === ALLOWED_EXTENSION_ID) {
     return next();
   }
+  
+  console.log(`[CORS Blocked] Origin: '${origin}', X-Extension-ID: '${extensionId}' but expected: '${ALLOWED_EXTENSION_ID}'`);
   
   // For dev purposes, if we are testing locally without the extension, 
   // you might conditionally bypass this. But as per requirements: NO WILDCARD CORS.

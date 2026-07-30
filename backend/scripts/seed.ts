@@ -7,7 +7,7 @@ dotenv.config();
 
 const MONGO_URI = process.env.MONGO_URI || '';
 
-async function seed() {
+async function seedTrendyol() {
   if (!MONGO_URI) {
     console.error('No MONGO_URI found in .env');
     process.exit(1);
@@ -15,28 +15,28 @@ async function seed() {
 
   try {
     await mongoose.connect(MONGO_URI);
-    console.log('Connected to DB for seeding...');
+    console.log('Connected to DB for Trendyol seeding...');
 
-    // Seed Store Config for example.com
+    // Seed Store Config for trendyol.com
     await StoreConfig.findOneAndUpdate(
-      { domain: 'example.com' },
+      { domain: 'trendyol.com' },
       {
-        domain: 'example.com',
-        couponInputSelector: 'input[name="coupon"]', // Fake selector
-        applyButtonSelector: 'button[type="submit"]', // Fake selector
+        domain: 'trendyol.com',
+        couponInputSelector: 'input[placeholder*="İndirim"], input[name*="coupon"], input[id*="discount"]', // Genel (tahmini) seçiciler
+        applyButtonSelector: 'button:contains("Uygula"), .apply-discount-button, [data-testid="apply-discount"]', 
       },
       { upsert: true, new: true }
     );
 
-    // Seed Coupons for example.com
-    const coupons = ['KUUPATEST50', 'INDIRIM20', 'BEDAVAKARGO'];
+    // Seed Coupons for trendyol.com
+    const coupons = ['TRENDYOL100', 'SUPERINDIRIM', 'KARGOFREE'];
     for (const code of coupons) {
       await Coupon.findOneAndUpdate(
-        { code, domain: 'example.com' },
+        { code, domain: 'trendyol.com' },
         {
           code,
-          domain: 'example.com',
-          discountType: 'PERCENTAGE',
+          domain: 'trendyol.com',
+          discountType: 'FIXED',
           isExpired: false,
           successRate: 100
         },
@@ -44,7 +44,7 @@ async function seed() {
       );
     }
 
-    console.log('Test data seeded successfully for example.com!');
+    console.log('Test data seeded successfully for trendyol.com!');
     process.exit(0);
   } catch (error) {
     console.error('Seeding error:', error);
@@ -52,4 +52,4 @@ async function seed() {
   }
 }
 
-seed();
+seedTrendyol();

@@ -24,7 +24,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     }
 
     // Fetch from backend
-    fetch(`${API_BASE_URL}/store/${domain}`)
+    fetch(`${API_BASE_URL}/store/${domain}`, {
+      headers: {
+        'X-Extension-ID': chrome.runtime.id
+      }
+    })
       .then(res => {
         if (!res.ok) throw new Error('Not found');
         return res.json();
@@ -58,7 +62,11 @@ chrome.webNavigation.onCompleted.addListener((details) => {
       
       // Proactively fetch and cache
       if (!cache.has(hostname)) {
-        fetch(`${API_BASE_URL}/store/${hostname}`)
+        fetch(`${API_BASE_URL}/store/${hostname}`, {
+          headers: {
+            'X-Extension-ID': chrome.runtime.id
+          }
+        })
           .then(res => res.ok ? res.json() : null)
           .then(data => {
             if (data) {

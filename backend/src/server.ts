@@ -29,7 +29,7 @@ app.use(cors({
     }
   },
   methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Extension-ID']
 }));
 
 // Body parser
@@ -41,6 +41,11 @@ app.use(mongoSanitize());
 // Data sanitization against XSS
 app.use(xss());
 // -----------------------------
+
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
+  next();
+});
 
 // Routes
 app.use('/api/v1', apiRoutes);
