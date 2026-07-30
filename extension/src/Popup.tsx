@@ -1,42 +1,60 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Tag } from 'lucide-react';
 
+interface Coupon {
+  id: string;
+  code: string;
+}
+
+const getRootDomain = (hostname: string) => {
+  const parts = hostname.split('.');
+  if (parts.length > 2) {
+    if (hostname.endsWith('.tr') && parts.length > 3) {
+      return parts.slice(-3).join('.');
+    }
+    return parts.slice(-2).join('.');
+  }
+  return hostname.replace('www.', '');
+};
+
 const Popup: React.FC = () => {
   const [domain, setDomain] = useState<string>('Yükleniyor...');
-  const [status, setStatus] = useState<'idle' | 'searching' | 'found' | 'none'>('idle');
-  const [coupons, setCoupons] = useState<string[]>([]);
-
+  const [status, setStatus] = useState<'idle' | 'searching' | 'found' | 'none' | 'testing'>('idle');
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
   useEffect(() => {
-    // Get active tab info
     if (typeof chrome !== 'undefined' && chrome.tabs) {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const url = tabs[0]?.url;
-        if (url) {
+        const activeTab = tabs[0];
+        if (activeTab && activeTab.url) {
           try {
-            const urlObj = new URL(url);
-            let hostname = urlObj.hostname;
-            if (hostname.startsWith('www.')) hostname = hostname.slice(4);
+            const urlObj = new URL(activeTab.url);
+            const hostname = getRootDomain(urlObj.hostname);
             setDomain(hostname);
+            setStatus('searching');
             
-            // Ask background script if this domain has coupons
             chrome.runtime.sendMessage({ type: 'CHECK_COUPONS', domain: hostname }, (response) => {
-              if (response && response.coupons && response.coupons.length > 0) {
-                setStatus('found');
+              if (chrome.runtime.lastError) {
+                console.error('İletişim hatası oluştu.', chrome.runtime.lastError);
+                setStatus('idle');
+                return;
+              }
+              if (response?.coupons && response.coupons.length > 0) {
                 setCoupons(response.coupons);
+                setStatus('found');
               } else {
                 setStatus('none');
               }
             });
           } catch (e) {
             setDomain('Bilinmeyen Site');
+            setStatus('none');
           }
         }
       });
     } else {
-      // Local testing
       setDomain('example.com');
       setStatus('found');
-      setCoupons(['TEST10', 'SAVE20']);
+      setCoupons([{ id: '1', code: 'TEST10' }, { id: '2', code: 'SAVE20' }]);
     }
   }, []);
 

@@ -1,3 +1,4 @@
+export {};
 const API_BASE_URL = 'http://localhost:5000/api/v1'; // Replace with prod URL
 
 interface StoreData {
@@ -67,16 +68,26 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 // Watch navigation to proactively fetch data
+const getRootDomain = (hostname: string) => {
+  const parts = hostname.split('.');
+  if (parts.length > 2) {
+    if (hostname.endsWith('.tr') && parts.length > 3) {
+      return parts.slice(-3).join('.');
+    }
+    return parts.slice(-2).join('.');
+  }
+  return hostname.replace('www.', '');
+};
+
 chrome.webNavigation.onCompleted.addListener((details) => {
   if (details.frameId === 0) { // Main frame only
     try {
       const url = new URL(details.url);
-      let hostname = url.hostname;
-      if (hostname.startsWith('www.')) hostname = hostname.slice(4);
+      const domain = getRootDomain(url.hostname);
       
       // Proactively fetch and cache
-      if (!cache.has(hostname)) {
-        fetch(`${API_BASE_URL}/store/${hostname}`, {
+      if (!cache.has(domain)) {
+        fetch(`${API_BASE_URL}/store/${domain}`, {
           headers: {
             'X-Extension-ID': chrome.runtime.id
           }
@@ -84,7 +95,7 @@ chrome.webNavigation.onCompleted.addListener((details) => {
           .then(res => res.ok ? res.json() : null)
           .then(data => {
             if (data) {
-              cache.set(hostname, data);
+              cache.set(domain, data);
               // We could also notify the content script that coupons are available to show a badge
               chrome.action.setBadgeText({ tabId: details.tabId, text: data.coupons.length.toString() });
               chrome.action.setBadgeBackgroundColor({ tabId: details.tabId, color: '#B87333' });
@@ -92,7 +103,7 @@ chrome.webNavigation.onCompleted.addListener((details) => {
           })
           .catch(() => {});
       } else {
-        const data = cache.get(hostname);
+        const data = cache.get(domain);
         if (data && data.coupons.length > 0) {
             chrome.action.setBadgeText({ tabId: details.tabId, text: data.coupons.length.toString() });
             chrome.action.setBadgeBackgroundColor({ tabId: details.tabId, color: '#B87333' });

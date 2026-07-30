@@ -4,8 +4,11 @@ export interface ICoupon extends Document {
   code: string;
   domain: string;
   discountType: 'PERCENTAGE' | 'FIXED' | 'FREE_SHIPPING' | 'UNKNOWN';
+  discountValue?: number;
   isExpired: boolean;
   successRate: number;
+  failureCount: number;
+  discoveredBy: string;
   createdAt: Date;
   updatedAt: Date;
 }

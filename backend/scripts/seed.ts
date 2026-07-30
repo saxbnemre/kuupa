@@ -24,7 +24,19 @@ async function seedTrendyol() {
         domain: 'trendyol.com',
         couponInputSelector: 'input[placeholder*="İndirim"], input[name*="coupon"], input[id*="discount"]',
         applyButtonSelector: '.apply-discount-button, [data-testid="apply-discount"], button[type="button"]', 
-        cartTotalSelector: '.pb-summary-total-price, .total-price, .summary-total', // Example selectors for cart total
+        cartTotalSelector: '.pb-summary-total-price, .total-price, .summary-total',
+      },
+      { upsert: true, new: true }
+    );
+
+    // Seed Store Config for hepsiburada.com
+    await StoreConfig.findOneAndUpdate(
+      { domain: 'hepsiburada.com' },
+      {
+        domain: 'hepsiburada.com',
+        couponInputSelector: 'input[name="couponCode"], input[placeholder*="Kupon"], .coupon-input',
+        applyButtonSelector: 'button:has(span:contains("Kullan")), .apply-button, [data-test-id="apply-coupon-button"]', 
+        cartTotalSelector: '.total-price, .summary_total_price, [data-test-id="cart-total-price"]',
       },
       { upsert: true, new: true }
     );
@@ -39,13 +51,24 @@ async function seedTrendyol() {
           domain: 'trendyol.com',
           discountType: 'FIXED',
           isExpired: false,
-          successRate: 100
+          discountValue: 20
         },
         { upsert: true }
       );
     }
 
-    console.log('Test data seeded successfully for trendyol.com!');
+    await Coupon.findOneAndUpdate(
+      { code: 'HEPSI50', domain: 'hepsiburada.com' },
+      {
+        code: 'HEPSI50',
+        domain: 'hepsiburada.com',
+        discountType: 'FIXED',
+        discountValue: 50
+      },
+      { upsert: true }
+    );
+
+    console.log('Test data seeded successfully for trendyol.com and hepsiburada.com!');
     process.exit(0);
   } catch (error) {
     console.error('Seeding error:', error);

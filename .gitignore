@@ -1,5 +1,38 @@
-node_modules/
-dist/
-.env
-.DS_Store
+# Logs
+logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+node_modules/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# dotenv environment variables file
+.env
+.env.test
+.env.production
+.env.local
+
+# Build output
+dist
+backend/dist
+extension/dist
+website/dist
+
+# Python / Scrapers
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE and OS files
+.DS_Store
+.idea/
+.vscode/
+
+# kUUpa Specific
+tree_output.txt
