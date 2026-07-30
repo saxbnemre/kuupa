@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "kUUpa - Evrensel İndirim ve Kupon Eklentisi",
+  "version": "1.0.0",
+  "description": "Tüm e-ticaret platformlarında çalışan evrensel kupon deneme eklentisi.",
+  "action": {
+    "default_popup": "index.html"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "*://*/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  }
+}
