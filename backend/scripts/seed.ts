@@ -24,6 +24,7 @@ async function seedTrendyol() {
         domain: 'trendyol.com',
         couponInputSelector: 'input[placeholder*="İndirim"], input[name*="coupon"], input[id*="discount"]',
         applyButtonSelector: '.apply-discount-button, [data-testid="apply-discount"], button[type="button"]', 
+        cartTotalSelector: '.pb-summary-total-price, .total-price, .summary-total', // Example selectors for cart total
       },
       { upsert: true, new: true }
     );

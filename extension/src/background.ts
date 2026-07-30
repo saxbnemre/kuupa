@@ -46,9 +46,23 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
   
   if (message.type === 'GET_CONFIG') {
-     const domain = message.domain;
-     sendResponse(cache.get(domain)?.storeConfig || null);
-     return true;
+    const domain = message.domain;
+    // We send BOTH the config and coupons back to content.js
+    sendResponse(cache.get(domain) || null);
+    return true;
+  }
+  
+  if (message.type === 'REPORT_FAILURE') {
+    const { domain, code } = message;
+    fetch(`${API_BASE_URL}/store/${domain}/report`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Extension-ID': chrome.runtime.id
+      },
+      body: JSON.stringify({ code })
+    }).catch(() => {});
+    return true;
   }
 });
 

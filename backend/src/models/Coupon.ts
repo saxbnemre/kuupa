@@ -14,13 +14,12 @@ const CouponSchema: Schema = new Schema(
   {
     code: { type: String, required: true },
     domain: { type: String, required: true, index: true },
-    discountType: {
-      type: String,
-      enum: ['PERCENTAGE', 'FIXED', 'FREE_SHIPPING', 'UNKNOWN'],
-      default: 'UNKNOWN'
-    },
+    discountType: { type: String, enum: ['PERCENTAGE', 'FIXED', 'FREE_SHIPPING'], required: true },
+    discountValue: { type: Number },
     isExpired: { type: Boolean, default: false },
-    successRate: { type: Number, default: 0 }
+    successRate: { type: Number, default: 100 },
+    failureCount: { type: Number, default: 0 },
+    discoveredBy: { type: String, default: 'scraper' }, // 'scraper' or 'user'
   },
   { timestamps: true }
 );
