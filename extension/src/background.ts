@@ -62,8 +62,27 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         'X-Extension-ID': chrome.runtime.id
       },
       body: JSON.stringify({ code })
-    }).catch(() => {});
-    return true;
+    }).catch(err => console.error('kUUpa: Error reporting failure:', err));
+    return false;
+  }
+
+  if (message.type === 'SHARE_COUPON') {
+    const { domain, code } = message;
+    fetch(`${API_BASE_URL}/store/${domain}/discover`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Extension-ID': chrome.runtime.id
+      },
+      body: JSON.stringify({ code, discountType: 'UNKNOWN' })
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => sendResponse({ success: true, data }))
+      .catch(err => {
+        console.error('kUUpa: Error sharing coupon:', err);
+        sendResponse({ success: false });
+      });
+    return true; // Keep message channel open for async response
   }
 });
 
