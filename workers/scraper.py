@@ -115,8 +115,8 @@ async def fetch_with_playwright(browser_context, url):
     print(f"[INFO] Fetching {url} with Stealth Mode...")
     page = await browser_context.new_page()
     try:
-        from playwright_stealth import stealth_async
-        await stealth_async(page)
+        from playwright_stealth import Stealth
+        await Stealth().apply_stealth_async(page)
         
         # Navigate to the page
         response = await page.goto(url, wait_until='domcontentloaded', timeout=30000)
