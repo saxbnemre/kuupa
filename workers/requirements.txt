@@ -2,3 +2,5 @@ requests==2.31.0
 beautifulsoup4==4.12.2
 pymongo==4.6.1
 python-dotenv==1.0.0
+playwright==1.42.0
+playwright-stealth==1.0.6

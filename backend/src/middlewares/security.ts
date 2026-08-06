@@ -20,21 +20,15 @@ export const apiLimiter = rateLimit({
 export const enforceExtensionOrigin = (req: Request, res: Response, next: NextFunction) => {
   const origin = req.headers.origin;
   const extensionId = req.headers['x-extension-id'];
-  
+
   // Allow requests coming from the explicit chrome-extension origin OR carrying the explicit ID
   const allowedOrigin = `chrome-extension://${ALLOWED_EXTENSION_ID}`;
 
   if (origin === allowedOrigin || extensionId === ALLOWED_EXTENSION_ID) {
     return next();
   }
-  
+
   console.log(`[CORS Blocked] Origin: '${origin}', X-Extension-ID: '${extensionId}' but expected: '${ALLOWED_EXTENSION_ID}'`);
-  
-  // For dev purposes, if we are testing locally without the extension, 
-  // you might conditionally bypass this. But as per requirements: NO WILDCARD CORS.
-  if (process.env.NODE_ENV !== 'production' && origin === 'http://localhost:3000') {
-     return next(); // Just for local UI testing if necessary
-  }
 
   res.status(403).json({
     error: 'Forbidden: Invalid Origin.',

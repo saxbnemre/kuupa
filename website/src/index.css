@@ -1,23 +1,317 @@
-@import "tailwindcss";
+/* ==========================================================================
+   kUUpa Premium Design System - Vanilla CSS
+   ========================================================================== */
 
-@theme {
-  --color-brand-dark: #0f0f11;
-  --color-brand-copper: #B87333;
-  --color-brand-copperLight: #cd8b4a;
-  --color-brand-copperDark: #8a5525;
+/* 1. Variables & Theming */
+:root {
+  /* Colors */
+  --color-bg-base: #0f0f11;
+  --color-bg-surface: #1a1a1f;
+  --color-text-main: #ffffff;
+  --color-text-muted: #9ca3af;
+  
+  --color-brand-primary: #B87333; /* Copper */
+  --color-brand-light: #cd8b4a;
+  --color-brand-dark: #8a5525;
+  --color-brand-glow: rgba(184, 115, 51, 0.4);
+  
+  --color-accent-purple: rgba(147, 51, 234, 0.15);
+  --color-white-glass: rgba(255, 255, 255, 0.05);
+  --color-white-border: rgba(255, 255, 255, 0.1);
+
+  /* Typography */
+  --font-family-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  
+  /* Spacing */
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 4rem;
+  --spacing-2xl: 8rem;
+
+  /* Borders & Shadows */
+  --radius-md: 0.75rem;
+  --radius-lg: 1.5rem;
+  --radius-pill: 9999px;
+  --shadow-glow: 0 0 20px var(--color-brand-glow);
 }
 
-@layer base {
-  body {
-    @apply bg-brand-dark text-white font-sans antialiased selection:bg-brand-copper selection:text-white;
+/* 2. Reset & Base Styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-main);
+  font-family: var(--font-family-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::selection {
+  background-color: var(--color-brand-primary);
+  color: white;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+/* 3. Typography Utility Classes */
+.text-center { text-align: center; }
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-brand-primary), var(--color-brand-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-muted { color: var(--color-text-muted); }
+.font-bold { font-weight: 700; }
+.font-black { font-weight: 900; }
+.text-sm { font-size: 0.875rem; }
+.text-lg { font-size: 1.125rem; }
+.text-xl { font-size: 1.25rem; }
+.text-3xl { font-size: 2rem; line-height: 1.2; }
+.text-5xl { font-size: 3rem; line-height: 1.1; }
+.text-7xl { font-size: 4.5rem; line-height: 1.1; letter-spacing: -0.02em; }
+
+@media (max-width: 768px) {
+  .text-5xl { font-size: 2.5rem; }
+  .text-7xl { font-size: 3rem; }
+}
+
+/* 4. Layout Utility Classes */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.gap-sm { gap: var(--spacing-sm); }
+.gap-md { gap: var(--spacing-md); }
+.gap-lg { gap: var(--spacing-lg); }
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: var(--spacing-lg);
+}
+@media (min-width: 768px) {
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: var(--spacing-lg);
+}
+@media (min-width: 768px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* 5. Components */
+
+/* Glass Panel */
+.glass-panel {
+  background: var(--color-white-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-white-border);
+  border-radius: var(--radius-lg);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: 1rem 2rem;
+  border-radius: var(--radius-pill);
+  font-weight: bold;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary {
+  background-color: var(--color-brand-primary);
+  color: white;
+  box-shadow: var(--shadow-glow);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-brand-light);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 30px rgba(184, 115, 51, 0.6);
+}
+
+.btn-primary:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.btn-secondary {
+  background: var(--color-white-glass);
+  border: 1px solid var(--color-white-border);
+  color: white;
+}
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Navigation */
+.navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 50;
+  border-bottom: 1px solid var(--color-white-border);
+  background: rgba(15, 15, 17, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.navbar-content {
+  height: 5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: linear-gradient(135deg, var(--color-brand-primary), var(--color-brand-dark));
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.5rem;
+  box-shadow: var(--shadow-glow);
+}
+.nav-links {
+  display: none;
+}
+@media (min-width: 768px) {
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #d1d5db;
   }
 }
+.nav-link {
+  transition: color 0.2s ease;
+}
+.nav-link:hover {
+  color: var(--color-brand-primary);
+}
+.btn-nav {
+  background: white;
+  color: var(--color-bg-base);
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-pill);
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+.btn-nav:hover {
+  background: var(--color-brand-primary);
+  color: white;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
 
-.glass-panel {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+/* 6. Layout Sections */
+.hero-section {
+  position: relative;
+  padding-top: 10rem;
+  padding-bottom: 5rem;
+  overflow: hidden;
+}
+.hero-badge {
+  display: inline-block;
+  padding: 0.25rem 1rem;
+  border-radius: var(--radius-pill);
+  color: var(--color-brand-light);
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--color-brand-glow);
+}
+
+/* Background Blurs */
+.bg-glow-1 {
+  position: absolute;
+  top: 25%;
+  left: 20%;
+  width: 500px;
+  height: 500px;
+  background: var(--color-brand-glow);
+  border-radius: 50%;
+  filter: blur(120px);
+  z-index: -1;
+  mix-blend-mode: screen;
+}
+.bg-glow-2 {
+  position: absolute;
+  bottom: 0;
+  right: 20%;
+  width: 600px;
+  height: 600px;
+  background: var(--color-accent-purple);
+  border-radius: 50%;
+  filter: blur(150px);
+  z-index: -1;
+  mix-blend-mode: screen;
+}
+
+/* Feature Cards */
+.feature-card {
+  padding: 2rem;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+.feature-card:hover {
+  border-color: rgba(184, 115, 51, 0.5);
+  transform: translateY(-5px);
+}
+.feature-icon-wrapper {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 1rem;
+  background: rgba(184, 115, 51, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  transition: transform 0.3s ease;
+  color: var(--color-brand-light);
+}
+.feature-card:hover .feature-icon-wrapper {
+  transform: scale(1.1) rotate(5deg);
+}
+.feature-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
 }
 
 /* Custom Scrollbar */
@@ -25,12 +319,12 @@
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f0f11;
+  background: var(--color-bg-base);
 }
 ::-webkit-scrollbar-thumb {
-  background: #B87333;
+  background: var(--color-brand-primary);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #cd8b4a;
+  background: var(--color-brand-light);
 }

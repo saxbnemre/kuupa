@@ -17,7 +17,7 @@ const CouponSchema: Schema = new Schema(
   {
     code: { type: String, required: true },
     domain: { type: String, required: true, index: true },
-    discountType: { type: String, enum: ['PERCENTAGE', 'FIXED', 'FREE_SHIPPING'], required: true },
+    discountType: { type: String, enum: ['PERCENTAGE', 'FIXED', 'FREE_SHIPPING', 'UNKNOWN'], required: true },
     discountValue: { type: Number },
     isExpired: { type: Boolean, default: false },
     successRate: { type: Number, default: 100 },

@@ -1,4 +1,4 @@
-export {};
+export { };
 const API_BASE_URL = 'http://localhost:5000/api/v1'; // Replace with prod URL
 
 interface StoreData {
@@ -18,7 +18,7 @@ const cache = new Map<string, StoreData>();
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'CHECK_COUPONS') {
     const domain = message.domain;
-    
+
     if (cache.has(domain)) {
       sendResponse(cache.get(domain));
       return true;
@@ -45,14 +45,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
     return true; // Indicates async response
   }
-  
+
   if (message.type === 'GET_CONFIG') {
     const domain = message.domain;
     // We send BOTH the config and coupons back to content.js
     sendResponse(cache.get(domain) || null);
     return true;
   }
-  
+
   if (message.type === 'REPORT_FAILURE') {
     const { domain, code } = message;
     fetch(`${API_BASE_URL}/store/${domain}/report`, {
@@ -84,6 +84,23 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       });
     return true; // Keep message channel open for async response
   }
+
+  if (message.type === 'SEARCH_PRODUCTS') {
+    const { query } = message;
+    fetch(`${API_BASE_URL}/search?q=${encodeURIComponent(query)}`, {
+      method: 'GET',
+      headers: {
+        'X-Extension-ID': chrome.runtime.id
+      }
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => sendResponse(data))
+      .catch(err => {
+        console.error('kUUpa: Error searching products:', err);
+        sendResponse({ products: null });
+      });
+    return true; // Keep message channel open for async response
+  }
 });
 
 // Watch navigation to proactively fetch data
@@ -103,7 +120,7 @@ chrome.webNavigation.onCompleted.addListener((details) => {
     try {
       const url = new URL(details.url);
       const domain = getRootDomain(url.hostname);
-      
+
       // Proactively fetch and cache
       if (!cache.has(domain)) {
         fetch(`${API_BASE_URL}/store/${domain}`, {
@@ -120,12 +137,12 @@ chrome.webNavigation.onCompleted.addListener((details) => {
               chrome.action.setBadgeBackgroundColor({ tabId: details.tabId, color: '#B87333' });
             }
           })
-          .catch(() => {});
+          .catch(() => { });
       } else {
         const data = cache.get(domain);
         if (data && data.coupons.length > 0) {
-            chrome.action.setBadgeText({ tabId: details.tabId, text: data.coupons.length.toString() });
-            chrome.action.setBadgeBackgroundColor({ tabId: details.tabId, color: '#B87333' });
+          chrome.action.setBadgeText({ tabId: details.tabId, text: data.coupons.length.toString() });
+          chrome.action.setBadgeBackgroundColor({ tabId: details.tabId, color: '#B87333' });
         }
       }
     } catch (e) {

@@ -56,14 +56,18 @@ app.get('/health', (req, res) => {
 });
 
 // Database connection & Server start
-mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    app.listen(PORT, () => {
-      console.log(`kUUpa Backend running on port ${PORT}`);
+if (process.env.NODE_ENV !== 'test') {
+  mongoose.connect(MONGO_URI)
+    .then(() => {
+      console.log('Connected to MongoDB');
+      app.listen(PORT, () => {
+        console.log(`kUUpa Backend running on port ${PORT}`);
+      });
+    })
+    .catch((error) => {
+      console.error('MongoDB connection error:', error);
+      process.exit(1);
     });
-  })
-  .catch((error) => {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
-  });
+}
+
+export default app;

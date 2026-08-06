@@ -9,7 +9,47 @@ interface StoreConfig {
   failureMessageSelector?: string;
 }
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const waitForElement = (selector: string, timeout = 5000): Promise<Element | null> => {
+  return new Promise((resolve) => {
+    const el = document.querySelector(selector);
+    if (el) return resolve(el);
+
+    const observer = new MutationObserver(() => {
+      const el = document.querySelector(selector);
+      if (el) {
+        observer.disconnect();
+        resolve(el);
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    setTimeout(() => {
+      observer.disconnect();
+      resolve(null);
+    }, timeout);
+  });
+};
+
+const waitForCondition = (conditionFunc: () => boolean, timeout = 5000): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (conditionFunc()) return resolve(true);
+
+    const observer = new MutationObserver(() => {
+      if (conditionFunc()) {
+        observer.disconnect();
+        resolve(true);
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true });
+
+    setTimeout(() => {
+      observer.disconnect();
+      resolve(false);
+    }, timeout);
+  });
+};
 
 const triggerNativeEvents = (el: HTMLElement, events: string[]) => {
   for (const ev of events) {
@@ -39,9 +79,6 @@ const parsePrice = (text: string | null | undefined): number => {
 const getRootDomain = (hostname: string) => {
   const parts = hostname.split('.');
   if (parts.length > 2) {
-    // Basic handler for subdomains (e.g. checkout.trendyol.com -> trendyol.com)
-    // Note: this simplistic approach works for .com but might fail for .com.tr
-    // So we handle .com.tr, .edu.tr specifically
     if (hostname.endsWith('.tr') && parts.length > 3) {
       return parts.slice(-3).join('.');
     }
@@ -52,7 +89,6 @@ const getRootDomain = (hostname: string) => {
 
 const getCartTotal = (selector: string | undefined): number => {
   if (!selector) return 0;
-  // Try to find the element
   const elements = document.querySelectorAll(selector);
   for (const el of Array.from(elements)) {
      const price = parsePrice(el.textContent);
@@ -62,9 +98,8 @@ const getCartTotal = (selector: string | undefined): number => {
 };
 
 const injectFloatingButton = (inputEl: HTMLInputElement, coupons: string[], config: StoreConfig) => {
-  // Remove existing
   const existing = document.getElementById('kuupa-floating-btn');
-  if (existing) existing.remove();
+  if (existing) return;
 
   const btn = document.createElement('div');
   btn.id = 'kuupa-floating-btn';
@@ -81,10 +116,15 @@ const injectFloatingButton = (inputEl: HTMLInputElement, coupons: string[], conf
   btn.style.transition = 'all 0.2s ease';
   btn.textContent = `🎁 ${coupons.length} Kupon Dene`;
 
-  // Position it right above the input
-  const rect = inputEl.getBoundingClientRect();
-  btn.style.top = `${rect.top + window.scrollY - 45}px`;
-  btn.style.left = `${rect.left + window.scrollX}px`;
+  const positionBtn = () => {
+    const rect = inputEl.getBoundingClientRect();
+    btn.style.top = `${rect.top + window.scrollY - 45}px`;
+    btn.style.left = `${rect.left + window.scrollX}px`;
+  };
+  
+  positionBtn();
+  window.addEventListener('resize', positionBtn);
+  window.addEventListener('scroll', positionBtn);
 
   btn.onmouseover = () => { btn.style.transform = 'scale(1.05)'; };
   btn.onmouseout = () => { btn.style.transform = 'scale(1)'; };
@@ -114,21 +154,25 @@ const injectFloatingButton = (inputEl: HTMLInputElement, coupons: string[], conf
         inputEl.focus();
         inputEl.value = code;
         triggerNativeEvents(inputEl, ['input', 'change', 'blur']);
-        await sleep(500);
 
-        const applyBtn = document.querySelector<HTMLButtonElement>(config.applyButtonSelector);
+        const applyBtn = await waitForElement(config.applyButtonSelector, 1500) as HTMLButtonElement | null;
         if (applyBtn) {
           applyBtn.click();
           triggerNativeEvents(applyBtn, ['mousedown', 'mouseup', 'click']);
         } else {
-          console.warn('kUUpa: Apply button not found using selector:', config.applyButtonSelector);
+          console.warn('kUUpa: Apply button not found:', config.applyButtonSelector);
         }
 
-        await sleep(2500); // Wait for network response and UI update
+        await waitForCondition(() => {
+           const newPrice = getCartTotal(config.cartTotalSelector);
+           if (initialPrice > 0 && newPrice !== initialPrice && newPrice > 0) return true;
+           if (config.successMessageSelector && document.querySelector(config.successMessageSelector)) return true;
+           if (config.failureMessageSelector && document.querySelector(config.failureMessageSelector)) return true;
+           return false;
+        }, 3500);
 
         const newPrice = getCartTotal(config.cartTotalSelector);
         
-        // Did we find a lower price compared to initial?
         if (initialPrice > 0 && newPrice > 0 && newPrice < initialPrice && newPrice < currentBestPrice) {
           const discount = currentBestPrice - newPrice;
           bestCoupon = code;
@@ -136,26 +180,25 @@ const injectFloatingButton = (inputEl: HTMLInputElement, coupons: string[], conf
           hasRealDiscount = true;
           console.log(`kUUpa: New best coupon! ${code} saves ${discount}`);
         } else if (newPrice === currentBestPrice || newPrice === 0 || newPrice >= initialPrice) {
-          // Fallback: check success message if price parsing failed
           if (config.successMessageSelector) {
              const successEl = document.querySelector(config.successMessageSelector);
              if (successEl && successEl.textContent?.trim().length) {
                 bestCoupon = code;
                 hasRealDiscount = true;
-                break; // Stop at first success if price parsing fails
+                break;
              }
           }
-          
-          // Report failure back to background
           chrome.runtime.sendMessage({ type: 'REPORT_FAILURE', domain: config.domain, code });
         }
 
-        // Remove coupon if selector exists
         if (config.removeCouponSelector) {
-          const removeBtn = document.querySelector<HTMLButtonElement>(config.removeCouponSelector);
+          const removeBtn = await waitForElement(config.removeCouponSelector, 1000) as HTMLButtonElement | null;
           if (removeBtn) {
             removeBtn.click();
-            await sleep(1500);
+            await waitForCondition(() => {
+               const p = getCartTotal(config.cartTotalSelector);
+               return p === initialPrice;
+            }, 2000);
           }
         }
       }
@@ -164,69 +207,133 @@ const injectFloatingButton = (inputEl: HTMLInputElement, coupons: string[], conf
         btn.textContent = `🔥 En İyi Kod: ${bestCoupon} Uygulanıyor!`;
         inputEl.value = bestCoupon;
         triggerNativeEvents(inputEl, ['input', 'change', 'blur']);
-        await sleep(500);
-        const applyBtn = document.querySelector<HTMLButtonElement>(config.applyButtonSelector);
+        
+        const applyBtn = await waitForElement(config.applyButtonSelector, 1500) as HTMLButtonElement | null;
         if (applyBtn) {
           applyBtn.click();
           triggerNativeEvents(applyBtn, ['mousedown', 'mouseup', 'click']);
         }
-        setTimeout(() => btn.remove(), 4000);
+        
+        setTimeout(() => {
+          btn.remove();
+          window.removeEventListener('resize', positionBtn);
+          window.removeEventListener('scroll', positionBtn);
+        }, 4000);
       } else {
         btn.textContent = '😔 Tüm kodlar geçersiz.';
         btn.style.background = '#666';
         
-        // Clear the input field since no coupon worked
         inputEl.value = '';
         triggerNativeEvents(inputEl, ['input', 'change', 'blur']);
         
-        setTimeout(() => btn.remove(), 4000);
+        setTimeout(() => {
+          btn.remove();
+          window.removeEventListener('resize', positionBtn);
+          window.removeEventListener('scroll', positionBtn);
+        }, 4000);
       }
     } catch (err: any) {
       console.error('kUUpa error:', err);
       btn.textContent = '❌ Hata: ' + (err.message || 'Bilinmeyen Hata');
       btn.style.background = '#d32f2f';
-      setTimeout(() => btn.remove(), 5000);
+      setTimeout(() => {
+        btn.remove();
+        window.removeEventListener('resize', positionBtn);
+        window.removeEventListener('scroll', positionBtn);
+      }, 5000);
     }
   });
 
   document.body.appendChild(btn);
   
-  // Remove if clicked outside
   const removeIfNotFocused = (e: MouseEvent) => {
     if (e.target !== inputEl && e.target !== btn) {
       btn.remove();
+      window.removeEventListener('resize', positionBtn);
+      window.removeEventListener('scroll', positionBtn);
       document.removeEventListener('click', removeIfNotFocused);
     }
   };
   setTimeout(() => document.addEventListener('click', removeIfNotFocused), 100);
 };
 
-// Listen for inputs focusing
-document.addEventListener('focusin', (e) => {
-  const el = e.target as HTMLInputElement;
-  if (el && el.tagName === 'INPUT') {
+// Handle messages from Popup
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.type === 'START_COUPON_TEST') {
+    const coupons = message.coupons.map((c: any) => typeof c === 'string' ? c : c.code);
     const hostname = getRootDomain(window.location.hostname);
-
+    
     chrome.runtime.sendMessage({ type: 'GET_CONFIG', domain: hostname }, (data: any) => {
-      if (data && data.storeConfig && data.coupons && data.coupons.length > 0) {
+      if (data && data.storeConfig && coupons && coupons.length > 0) {
         const config = data.storeConfig as StoreConfig;
-        
-        // Simple DOM matching string logic
         const selectors = config.couponInputSelector.split(',').map((s: string) => s.trim());
-        let isMatch = false;
-        for (const selector of selectors) {
-           try {
-             if (el.matches(selector)) {
-               isMatch = true;
-               break;
-             }
-           } catch(e) {}
-        }
         
-        if (isMatch) {
-          injectFloatingButton(el, data.coupons, config);
+        let inputEl: HTMLInputElement | null = null;
+        for (const selector of selectors) {
+           inputEl = document.querySelector<HTMLInputElement>(selector);
+           if (inputEl) break;
         }
+
+        if (inputEl) {
+          injectFloatingButton(inputEl, coupons, config);
+          const btn = document.getElementById('kuupa-floating-btn');
+          if (btn) {
+            btn.click();
+          }
+          sendResponse({ status: 'started' });
+        } else {
+           console.warn('kUUpa: Coupon input not found in DOM yet.');
+           sendResponse({ status: 'error', message: 'Kupon alanı bulunamadı.' });
+        }
+      } else {
+        sendResponse({ status: 'error', message: 'Konfigürasyon bulunamadı.' });
       }
     });
+    return true; 
   }
 });
+
+// Initialize and watch DOM for SPA
+const init = () => {
+  const hostname = getRootDomain(window.location.hostname);
+  chrome.runtime.sendMessage({ type: 'GET_CONFIG', domain: hostname }, (data: any) => {
+    if (data && data.storeConfig && data.coupons && data.coupons.length > 0) {
+      const config = data.storeConfig as StoreConfig;
+      const selectors = config.couponInputSelector.split(',').map((s: string) => s.trim());
+      
+      const checkAndInject = () => {
+         if (document.getElementById('kuupa-floating-btn')) return;
+         for (const selector of selectors) {
+           const el = document.querySelector<HTMLInputElement>(selector);
+           if (el) {
+             injectFloatingButton(el, data.coupons, config);
+             break;
+           }
+         }
+      };
+
+      checkAndInject();
+
+      const observer = new MutationObserver(() => {
+         checkAndInject();
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      
+      document.addEventListener('focusin', (e) => {
+        const el = e.target as HTMLInputElement;
+        if (el && el.tagName === 'INPUT') {
+          for (const selector of selectors) {
+            try {
+              if (el.matches(selector)) {
+                injectFloatingButton(el, data.coupons, config);
+                break;
+              }
+            } catch(e) {}
+          }
+        }
+      });
+    }
+  });
+};
+
+init();
