@@ -61,4 +61,4 @@ jobs:
         cd tests
         npm install
         npx playwright install --with-deps chromium
-        npx playwright test e2e/
+        xvfb-run npx playwright test e2e/
